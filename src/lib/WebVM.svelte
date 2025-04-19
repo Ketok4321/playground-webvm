@@ -7,7 +7,6 @@
 	import { networkInterface, startLogin } from '$lib/network.js'
 	import { introMessage, errorMessage, unexpectedErrorMessage } from '$lib/messages.js'
 	import { displayConfig, handleToolImpl } from '$lib/anthropic.js'
-	import { tryPlausible } from '$lib/plausible.js'
 
 	export let configObj = null;
 	export let cacheId = null;
@@ -201,7 +200,6 @@
 		// Raise the display to the foreground
 		const display = document.getElementById("display");
 		display.parentElement.style.zIndex = 5;
-		tryPlausible("Display activated");
 	}
 	async function initCheerpX()
 	{
@@ -221,7 +219,6 @@
 					if(configObj.diskImageUrl.startsWith(wssProtocol))
 					{
 						// WebSocket protocol failed, try agin using plain HTTP
-						tryPlausible("WS Disk failure");
 						blockDevice = await CheerpX.CloudDevice.create("https:" + configObj.diskImageUrl.substr(wssProtocol.length));
 					}
 					else
