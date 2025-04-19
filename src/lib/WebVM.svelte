@@ -1,19 +1,15 @@
 <script>
 	import { onMount, tick } from 'svelte';
 	import { get } from 'svelte/store';
-	import Nav from 'labs/packages/global-navbar/src/Nav.svelte';
-	import SideBar from '$lib/SideBar.svelte';
-	import '$lib/global.css';
+    import '$lib/global.css';
 	import '@xterm/xterm/css/xterm.css'
 	import '@fortawesome/fontawesome-free/css/all.min.css'
 	import { networkInterface, startLogin } from '$lib/network.js'
-	import { cpuActivity, diskActivity, cpuPercentage, diskLatency } from '$lib/activities.js'
 	import { introMessage, errorMessage, unexpectedErrorMessage } from '$lib/messages.js'
 	import { displayConfig, handleToolImpl } from '$lib/anthropic.js'
 	import { tryPlausible } from '$lib/plausible.js'
 
 	export let configObj = null;
-	export let processCallback = null;
 	export let cacheId = null;
 	export let cpuActivityEvents = [];
 	export let diskLatencies = [];
@@ -24,7 +20,6 @@
 	var fitAddon = null;
 	var cxReadFunc = null;
 	var blockCache = null;
-	var processCount = 0;
 	var curVT = 0;
 	var sideBarPinned = false;
 	function writeData(buf, vt)
@@ -104,35 +99,6 @@
 			totalActiveTime += (curTime - lastActiveTime);
 		}
 		cpuPercentage.set(Math.ceil((totalActiveTime / 10000) * 100));
-	}
-	function hddCallback(state)
-	{
-		diskActivity.set(state != "ready");
-	}
-	function latencyCallback(latency)
-	{
-		diskLatencies.push(latency);
-		if(diskLatencies.length > 30)
-			diskLatencies.shift();
-		// Average the latency over at most 30 blocks
-		var total = 0;
-		for(var i=0;i<diskLatencies.length;i++)
-			total += diskLatencies[i];
-		var avg = total / diskLatencies.length;
-		diskLatency.set(Math.ceil(avg));
-	}
-	function cpuCallback(state)
-	{
-		cpuActivity.set(state != "ready");
-		var curTime = Date.now();
-		var limitTime = curTime - 10000;
-		expireEvents(cpuActivityEvents, curTime, limitTime);
-		cpuActivityEvents.push({t: curTime, state: state});
-		computeCpuActivity(curTime, limitTime);
-		// Start an interval timer to cleanup old samples when no further activity is received
-		if(activityEventsInterval != 0)
-			clearInterval(activityEventsInterval);
-		activityEventsInterval = setInterval(cleanupEvents, 2000);
 	}
 	function computeXTermFontSize()
 	{
@@ -237,12 +203,6 @@
 		display.parentElement.style.zIndex = 5;
 		tryPlausible("Display activated");
 	}
-	function handleProcessCreated()
-	{
-		processCount++;
-		if(processCallback)
-			processCallback(processCount);
-	}
 	async function initCheerpX()
 	{
 		const CheerpX = await import('@leaningtech/cheerpx');
@@ -313,10 +273,6 @@
 			printMessage([e.toString()]);
 			return;
 		}
-		cx.registerCallback("cpuActivity", cpuCallback);
-		cx.registerCallback("diskActivity", hddCallback);
-		cx.registerCallback("diskLatency", latencyCallback);
-		cx.registerCallback("processCreated", handleProcessCreated);
 		term.scrollToBottom();
 		cxReadFunc = cx.setCustomConsole(writeData, term.cols, term.rows);
 		const display = document.getElementById("display");
@@ -361,11 +317,7 @@
 </script>
 
 <main class="relative w-full h-full">
-	<Nav />
 	<div class="absolute top-10 bottom-0 left-0 right-0">
-		<SideBar on:connect={handleConnect} on:reset={handleReset} handleTool={!configObj.needsDisplay || curVT == 7 ? handleTool : null} on:sidebarPinChange={handleSidebarPinChange}>
-			<slot></slot>
-		</SideBar>
 		{#if configObj.needsDisplay}
 			<div class="absolute top-0 bottom-0 {sideBarPinned ? 'left-[23.5rem]' : 'left-14'} right-0">
 				<canvas class="w-full h-full cursor-none" id="display"></canvas>
