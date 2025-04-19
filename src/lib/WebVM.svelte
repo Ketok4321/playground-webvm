@@ -6,7 +6,6 @@
 	import '@fortawesome/fontawesome-free/css/all.min.css'
 	import { networkInterface, startLogin } from '$lib/network.js'
 	import { introMessage, errorMessage, unexpectedErrorMessage } from '$lib/messages.js'
-	import { displayConfig, handleToolImpl } from '$lib/anthropic.js'
 
 	export let configObj = null;
 	export let cacheId = null;
@@ -127,8 +126,6 @@
 			screenshotMult = Math.min(screenshotMult, maxHeight / internalHeight);
 		var screenshotWidth = Math.floor(internalWidth * screenshotMult);
 		var screenshotHeight = Math.floor(internalHeight * screenshotMult);
-		// Track the state of the mouse as requested by the AI, to avoid losing the position due to user movement
-		displayConfig.set({width: screenshotWidth, height: screenshotHeight, mouseMult: internalMult * screenshotMult});
 	}
 	var curInnerWidth = 0;
 	var curInnerHeight = 0;
@@ -298,10 +295,6 @@
 			return;
 		await blockCache.reset();
 		location.reload();
-	}
-	async function handleTool(tool)
-	{
-		return await handleToolImpl(tool, term);
 	}
 	async function handleSidebarPinChange(event)
 	{
