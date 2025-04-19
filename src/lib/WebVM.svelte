@@ -4,7 +4,6 @@
     import '$lib/global.css';
 	import '@xterm/xterm/css/xterm.css'
 	import '@fortawesome/fontawesome-free/css/all.min.css'
-	import { networkInterface, startLogin } from '$lib/network.js'
 	import { introMessage, errorMessage, unexpectedErrorMessage } from '$lib/messages.js'
 
 	export let configObj = null;
@@ -37,66 +36,6 @@
 	{
 		for(var i=0;i<msg.length;i++)
 			term.write(msg[i] + "\n");
-	}
-	function expireEvents(list, curTime, limitTime)
-	{
-		while(list.length > 1)
-		{
-			if(list[1].t < limitTime)
-			{
-				list.shift();
-			}
-			else
-			{
-				break;
-			}
-		}
-	}
-	function cleanupEvents()
-	{
-		var curTime = Date.now();
-		var limitTime = curTime - 10000;
-		expireEvents(cpuActivityEvents, curTime, limitTime);
-		computeCpuActivity(curTime, limitTime);
-		if(cpuActivityEvents.length == 0)
-		{
-			clearInterval(activityEventsInterval);
-			activityEventsInterval = 0;
-		}
-	}
-	function computeCpuActivity(curTime, limitTime)
-	{
-		var totalActiveTime = 0;
-		var lastActiveTime = limitTime;
-		var lastWasActive = false;
-		for(var i=0;i<cpuActivityEvents.length;i++)
-		{
-			var e = cpuActivityEvents[i];
-			// NOTE: The first event could be before the limit,
-			//       we need at least one event to correctly mark
-			//       active time when there is long time under load
-			var eTime = e.t;
-			if(eTime < limitTime)
-				eTime = limitTime;
-			if(e.state == "ready")
-			{
-				// Inactive state, add the time from lastActiveTime
-				totalActiveTime += (eTime - lastActiveTime);
-				lastWasActive = false;
-			}
-			else
-			{
-				// Active state
-				lastActiveTime = eTime;
-				lastWasActive = true;
-			}
-		}
-		// Add the last interval if needed
-		if(lastWasActive)
-		{
-			totalActiveTime += (curTime - lastActiveTime);
-		}
-		cpuPercentage.set(Math.ceil((totalActiveTime / 10000) * 100));
 	}
 	function computeXTermFontSize()
 	{
@@ -259,7 +198,7 @@
 		];
 		try
 		{
-			cx = await CheerpX.Linux.create({mounts: mountPoints, networkInterface: networkInterface});
+			cx = await CheerpX.Linux.create({mounts: mountPoints});
 		}
 		catch(e)
 		{
@@ -282,28 +221,6 @@
 		}
 	}
 	onMount(initTerminal);
-	async function handleConnect()
-	{
-		const w = window.open("login.html", "_blank");
-		await cx.networkLogin();
-		w.location.href = await startLogin();
-	}
-	async function handleReset()
-	{
-		// Be robust before initialization
-		if(blockCache == null)
-			return;
-		await blockCache.reset();
-		location.reload();
-	}
-	async function handleSidebarPinChange(event)
-	{
-		sideBarPinned = event.detail;
-		// Make sure the pinning state of reflected in the layout
-		await tick();
-		// Adjust the layout based on the new sidebar state
-		triggerResize();
-	}
 </script>
 
 <main class="relative w-full h-full">
