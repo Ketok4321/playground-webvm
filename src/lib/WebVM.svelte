@@ -224,9 +224,9 @@
 </script>
 
 <main>
-	<div>
+	<div class="full-cover">
 		{#if configObj.needsDisplay}
-			<div>
+			<div class="display-wrapper">
 				<canvas id="display"></canvas>
 			</div>
 		{/if}
