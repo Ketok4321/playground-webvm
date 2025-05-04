@@ -223,14 +223,14 @@
 	onMount(initTerminal);
 </script>
 
-<main class="relative w-full h-full">
-	<div class="absolute top-10 bottom-0 left-0 right-0">
+<main>
+	<div>
 		{#if configObj.needsDisplay}
-			<div class="absolute top-0 bottom-0 {sideBarPinned ? 'left-[23.5rem]' : 'left-14'} right-0">
-				<canvas class="w-full h-full cursor-none" id="display"></canvas>
+			<div>
+				<canvas id="display"></canvas>
 			</div>
 		{/if}
-		<div class="absolute top-0 bottom-0 {sideBarPinned ? 'left-[23.5rem]' : 'left-14'} right-0 p-1 scrollbar" id="console">
+		<div id="console">
 		</div>
 	</div>
 </main>
