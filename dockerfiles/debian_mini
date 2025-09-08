@@ -1,15 +1,19 @@
-FROM --platform=i386 i386/debian:buster
+FROM mcr.microsoft.com/dotnet/sdk:8.0 as whereso
+RUN apt-get update && apt-get -y install git clang zlib1g-dev
+WORKDIR /src
+RUN git clone https://github.com/Ketok4321/WhereEsolang --branch v0.2.2 --single-branch
+WORKDIR /src/WhereEsolang
+RUN find . -name "*.fsproj" -exec sed -i 's/net8\.0/net48/g' {} +
+RUN cd src/WhereEsolang.Cli && dotnet build
+
+FROM --platform=i386 i386/debian:bookworm
 ARG DEBIAN_FRONTEND=noninteractive
 RUN apt-get clean && apt-get update && apt-get -y upgrade
-RUN apt-get -y install apt-utils gcc \
-	python3 vim unzip ruby nodejs \
-	fakeroot dbus base whiptail hexedit \
-	patch wamerican ucf manpages \
-	file luajit make lua50 dialog curl \
-	less cowsay netcat-openbsd
+RUN apt-get -y install mono-complete
 RUN useradd -m user && echo "user:password" | chpasswd
 # We set WORKDIR, as this gets extracted by Webvm to be used as the cwd. This is optional.
 WORKDIR /home/user/
+COPY --from=whereso /src/WhereEsolang/src/WhereEsolang.Cli/bin/Debug/net48/WhereEsolang.Cli.exe /usr/local/bin/whereso
 # We set env, as this gets extracted by Webvm. This is optional.
 ENV HOME="/home/user" TERM="xterm" USER="user" SHELL="/bin/bash" EDITOR="vim" LANG="en_US.UTF-8" LC_ALL="C"
 RUN echo 'root:password' | chpasswd
